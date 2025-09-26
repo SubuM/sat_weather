@@ -37,25 +37,30 @@ WEATHER_EMOJIS = {
     "Tornado": "🌪️ Tornado",
 }
 
-# CSS style mapping for weather cards. 
-# LEGIBILITY FIX: Font color is explicitly set to dark (#333333) for high contrast.
-# VISUAL FIX: Uses dynamic backgrounds (e.g., linear-gradient for Clear, otherwise colors).
+# --- DYNAMIC CARD STYLES (Font Color Switched for Legibility) ---
+# BASE_CARD_CSS is used to manage common styles. The 'color' property is 
+# now dynamically included in the dictionary values.
+
+BASE_CARD_CSS = "padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); background-size: cover; background-position: center;"
+
+# For images, you must choose dark backgrounds (Rain, Thunderstorm) 
+# or light backgrounds (Clear, Snow) and assign the appropriate font color.
 CARD_STYLES = {
-    # Expected: Sunny sky (Yellow/Blue Gradient)
-    "Clear": "background-image: linear-gradient(to top right, #ADD8E6, #FFFACD); border-left: 5px solid #FFD700; color: #333333; background-size: cover; background-position: center;", 
+    # LIGHT BACKGROUNDS (Use Dark Font: #333333)
+    "Clear": f"{BASE_CARD_CSS} background-image: linear-gradient(to top right, #ADD8E6, #FFFACD); border-left: 5px solid #FFD700; color: #333333;", 
+    "Clouds": f"{BASE_CARD_CSS} background-color: #F0F8FF; border-left: 5px solid #A9A9A9; color: #333333;",
+    "Drizzle": f"{BASE_CARD_CSS} background-color: #E0EFFF; border-left: 5px solid #6495ED; color: #333333;", 
+    "Snow": f"{BASE_CARD_CSS} background-color: #FFFFFF; border-left: 5px solid #ADD8E6; color: #333333;",
+    "Mist": f"{BASE_CARD_CSS} background-color: #E0EEE0; border-left: 5px solid #808080; color: #333333;",
+    "Haze": f"{BASE_CARD_CSS} background-color: #FAEBD7; border-left: 5px solid #9932CC; color: #333333;",
     
-    # Expected: Grey/Cloudy background (Light Blue/Gray solid)
-    "Clouds": "background-color: #F0F8FF; border-left: 5px solid #A9A9A9; color: #333333; background-size: cover; background-position: center;",
+    # DARK BACKGROUNDS (Use Light Font: #FFFFFF)
+    # Using a dark image path placeholder to demonstrate the need for a white font
+    "Rain": f"{BASE_CARD_CSS} background-image: url('images/rain_bg.jpg'); background-color: #4169E1; border-left: 5px solid #4169E1; color: #FFFFFF;",
+    "Thunderstorm": f"{BASE_CARD_CSS} background-color: #333333; border-left: 5px solid #800080; color: #FFFFFF;", 
     
-    # Expected: Rainy sky (Lavender/Blue solid)
-    "Rain": "background-color: #E6E6FA; border-left: 5px solid #4169E1; color: #333333; background-size: cover; background-position: center;",
-    
-    "Drizzle": "background-color: #F0F8FF; border-left: 5px solid #6495ED; color: #333333; background-size: cover; background-position: center;", 
-    "Thunderstorm": "background-color: #D3D3D3; border-left: 5px solid #800080; color: #333333; background-size: cover; background-position: center;", 
-    "Snow": "background-color: #FFFFFF; border-left: 5px solid #ADD8E6; color: #333333; background-size: cover; background-position: center;",
-    "Mist": "background-color: #E0EEE0; border-left: 5px solid #808080; color: #333333; background-size: cover; background-position: center;",
-    "Haze": "background-color: #FAEBD7; border-left: 5px solid #9932CC; color: #333333; background-size: cover; background-position: center;",
-    "Default": "background-color: #F5F5F5; border-left: 5px solid #696969; color: #333333; background-size: cover; background-position: center;",
+    # Default (Light background, dark font)
+    "Default": f"{BASE_CARD_CSS} background-color: #F5F5F5; border-left: 5px solid #696969; color: #333333;",
 }
 # --- END OF CONSTANTS ---
 
@@ -289,8 +294,7 @@ def display_forecast(data, timezone_offset):
         main_weather_group = weather.get('main', 'N/A')
         
         row = {
-            # FIX: We keep the time as a string for display, but the inherent order is guaranteed
-            "Time": dt_local.strftime('%H:%M'), 
+            "Time": dt_local.strftime('%H:%M'),
             "MainCondition": main_weather_group,
             "ConditionEmoji": WEATHER_EMOJIS.get(main_weather_group, '❓'),
             "ConditionDescription": weather.get('description', 'N/A').capitalize(),
@@ -330,10 +334,6 @@ def display_forecast(data, timezone_offset):
             df_day = df_forecast[df_forecast['FilterDate'] == date].copy()
             
             # FIX: Process the cards sequentially in chunks of 4 to ensure left-to-right order.
-            # We iterate using the internal index of the filtered DataFrame (0, 1, 2, 3, 4...)
-            # Since the API data is inherently chronological, this preserves the order.
-            
-            # The number of rows needed is ceil(num_cards / cols_per_row)
             num_cards = len(df_day)
             num_rows = (num_cards + cols_per_row - 1) // cols_per_row
             
@@ -354,6 +354,8 @@ def display_forecast(data, timezone_offset):
                     wind_dir = get_wind_direction(hour_data['WindDeg'])
                     
                     # --- HTML/CSS Card Generation ---
+                    # The font color is set by the 'color: inherit' and controlled by the 
+                    # main style property in CARD_STYLES.
                     html_card = f"""
                     <div style="padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); {style}">
                         <h5 style="margin-top: 0; margin-bottom: 5px; color: inherit;">{hour_data['Time']}</h5>
